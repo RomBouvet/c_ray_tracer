@@ -4,9 +4,11 @@
  * @version 10/04/2018
  **/
  
+#define _XOPEN_SOURCE
 #include <stdlib.h>
 #include <stdio.h>       
 #include <sys/socket.h>  
+#include <sys/msg.h>  
 #include <arpa/inet.h>   
 #include <string.h>     
 #include <unistd.h> 
@@ -18,7 +20,7 @@
     
 int main(int argc, char* argv[]){
 	/*** Declaration ***/
-	int i,udpSockFd,nbCustomers=0;
+	int msqid,buf,i,udpSockFd,nbCustomers=0;
 	int tcpSockFd[MAX_CUSTOMERS];
 	char* msg;
  	struct sockaddr_in Address;
@@ -30,6 +32,10 @@ int main(int argc, char* argv[]){
  	/*** Initialization ***/
  	len=sizeof(struct sockaddr_in);
  	msg=(char*) malloc(sizeof(char));
+ 	if((msqid = msgget((key_t)MSG_QUEUE_ID, 0)) == -1) {
+   	perror("Error while getting message's queue ");
+   	exit(EXIT_FAILURE);
+ 	}
  	for(i=0;i<MAX_CUSTOMERS;i++){
  		dim[i].height=(MAX_HEIGHT/MAX_CUSTOMERS);
  		dim[i].width=(MAX_WIDTH/MAX_CUSTOMERS);
@@ -40,6 +46,15 @@ int main(int argc, char* argv[]){
 	 	fprintf(stderr,"Use : %s UDPPort TCPPort[1] ... TCPPort[n] \n",argv[0]);
 	 	fprintf(stderr,"where :\n-> UDPPort : n° of viewer's UDP Port.\n-> TCPPort[n] : the differents n° of TCP Ports (1 for each possible customer -> here : %d)\n",MAX_CUSTOMERS);  
 	 	exit(EXIT_FAILURE);
+	}
+	
+	/*** Waiting for a message in msg's queue from controller ***/
+	printf("Waiting for controller...\n");
+	if(msgrcv(msqid,&buf,sizeof(int),0,0) == -1) {
+		perror("Error while receiving message from queue ");
+    	exit(EXIT_FAILURE); 
+	} else {
+		printf("C'est parti!\n");
 	}
  	
  	/*** socket's creation ***/
