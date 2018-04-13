@@ -124,6 +124,15 @@ int main(int argc, char* argv[]){
 			if(strcmp(msg,"o")==0){
 				nbCustomers++;
 				printf("The customer (%s:%d) can calculate these dimensions. Etablishing TCP session...\n",inet_ntoa(client.sin_addr),ntohs(client.sin_port));
+				/*** Etablishing TCP session ***/
+				if(listen(tcpSockFd[nbCustomers-1], 1) == -1) {
+					perror("Erreur lors de la mise en mode passif ");
+					exit(EXIT_FAILURE);
+				}
+				if((tcpSockFd[nbCustomers-1] = accept(tcpSockFd[nbCustomers-1], NULL, NULL)) == -1) {
+					perror("Erreur lors de la demande de connexion ");
+					exit(EXIT_FAILURE);
+  				}
 			} else {
 				printf("The customer (%s:%d) can't calculate these dimensions. Abort.\n",inet_ntoa(client.sin_addr),ntohs(client.sin_port));
 			}

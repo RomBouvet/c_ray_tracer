@@ -15,7 +15,7 @@
     
 
 int main(int argc, char* argv[]){
-	int sockfd;
+	int udpsockfd,tcpsockfd,possible=0;
 	dimensions_t dim;
 	char* msg;
  	struct sockaddr_in viewerAddress;
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]){
 	}
 	
 	/*** UDP socket's creation ***/
-	if((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+	if((udpsockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 		perror("Error while creating socket ");
 		exit(EXIT_FAILURE);
 	}
@@ -45,14 +45,14 @@ int main(int argc, char* argv[]){
 	}
 	
 	/*** Sending request ***/
-	if(sendto(sockfd,msg,sizeof(unsigned char), 0, (struct sockaddr*)&viewerAddress, sizeof(struct sockaddr_in)) == -1) {
+	if(sendto(udpsockfd,msg,sizeof(unsigned char), 0, (struct sockaddr*)&viewerAddress, sizeof(struct sockaddr_in)) == -1) {
 		perror("Error while sending request ");
 		exit(EXIT_FAILURE);
 	} 
 	printf("Customer : request sent\n");
 	
 	/*** Waiting for viewer's answer ***/
-	if(recvfrom(sockfd, msg, sizeof(char), 0,NULL,NULL) == -1) {
+	if(recvfrom(udpsockfd, msg, sizeof(char), 0,NULL,NULL) == -1) {
 		perror("Error while receiving message ");
 		exit(EXIT_FAILURE);
 	}
@@ -61,26 +61,41 @@ int main(int argc, char* argv[]){
 		fprintf(stderr,"Too much customers connected to the viewer. Try again later\n");
 	} else { 	/*** Possible ***/
 		printf("Waiting for dimensions...\n");
-		if(recvfrom(sockfd, &dim, sizeof(dimensions_t),0,NULL,NULL) == -1) {
+		if(recvfrom(udpsockfd, &dim, sizeof(dimensions_t),0,NULL,NULL) == -1) {
 			perror("Error while receiving message ");
 			exit(EXIT_FAILURE);
 		}
 		printf("Dims to calculate : %d x %d ",dim.height,dim.width);
 		if(1/*DIMENSIONS POSSIBLES A CALCULER ??? */){
 			printf("possible, etablishing TCP session.\n");
+			possible=1;
 			*msg='o';
 		} else {
 			printf("impossible, too heavy.\n");
 			*msg='k';
 		}
-		if(sendto(sockfd,msg,sizeof(unsigned char),0,(struct sockaddr*)&viewerAddress,sizeof(struct sockaddr_in)) == -1) {
+		if(sendto(udpsockfd,msg,sizeof(unsigned char),0,(struct sockaddr*)&viewerAddress,sizeof(struct sockaddr_in)) == -1) {
 			perror("Error while sending answer ");
 			exit(EXIT_FAILURE);
-		} 
+		}
 	}	
+	/*** Main customer's loop ***/
+	if(possible){
+		sleep(1);
+		/*** Etablishing TCP session ***/
+		if((tcpsockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
+			perror("Error while creating tcp socket ");
+			exit(EXIT_FAILURE);
+		}
+		if(connect(tcpsockfd, (struct sockaddr*)&viewerAddress, sizeof(viewerAddress)) == -1) {
+			perror("Error while connecting to viewer ");
+			exit(EXIT_FAILURE);
+		}
+		printf("Boucle principale...");
+	}
 	
 	/*** Socket closing ***/
-	if(close(sockfd) == -1) {
+	if(close(udpsockfd) == -1) {
 		perror("Error while closing socket ");
 		exit(EXIT_FAILURE);
 	}
