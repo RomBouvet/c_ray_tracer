@@ -2,9 +2,9 @@
 # CONFIGURATION GENERALE
 #
 
-EXEC = viewer client
-OBJETS = 
-NOM_PROJET = projet
+EXEC = rayt viewer client
+OBJETS = ncurses.o scene.o
+NOM_PROJET = projet_2017
 
 #
 # SUFFIXES
@@ -24,19 +24,27 @@ OBJETS_O = $(OBJETS) $(EXEC_O)
 #
 
 CC = gcc
-CCFLAGS = -Wall -O3 -Werror -pedantic -posix
-CCLIBS =
+CCFLAGS_STD = -Wall -O3 -Werror -ansi -pedantic
+CCFLAGS_DEBUG = -D _DEBUG_
+CCFLAGS = $(CCFLAGS_STD)
+CCLIBS = -lm -lncurses
 
 #
 # REGLES
 #
 
-all: $(OBJETS) $(EXEC_O)
+all: msg $(OBJETS) $(EXEC_O)
 	@echo "Creation des executables..."
 	@for i in $(EXEC); do \
 	$(CC) -o $$i $$i.o $(OBJETS) $(CCLIBS); \
 	done
 	@echo "Termine."
+
+msg:
+	@echo "Creation des objets..."
+
+debug: CCFLAGS = $(CCFLAGS_STD) $(CCFLAGS_DEBUG)
+debug: all
 
 #
 # REGLES PAR DEFAUT
@@ -76,9 +84,10 @@ ARCHIVE_FILES = *
 
 archive: clean
 	@echo "Creation de l'archive $(NOM_PROJET)$(shell date '+%y%m%d.tar.gz')..."
-	@REP=`basename $$PWD`; cd .. && tar zcf $(NOM_PROJET)$(shell date '+%y%m%d.tar.gz') $(addprefix $$REP/,$(ARCHIVE_FILES))
+	@REP=`basename "$$PWD"`; cd .. && tar zcf $(NOM_PROJET)$(shell date '+%y%m%d.tar.gz') $(addprefix "$$REP"/,$(ARCHIVE_FILES))
 	@echo "Termine."
 
 # DEPENDANCES
-serveur.o: serveur.c
-client.o: client.c
+ncurses.o: ncurses.c ncurses.h
+scene.o: scene.c scene.h ncurses.h
+rayt.o: rayt.c ncurses.h include.h scene.h
