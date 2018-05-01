@@ -15,7 +15,7 @@
     
 
 int main(int argc, char* argv[]){
-	int sockfd;
+	int sockfd,tcpsockfd;
 	dimensions_t dim;
 	char* msg;
  	struct sockaddr_in viewerAddress;
@@ -31,6 +31,11 @@ int main(int argc, char* argv[]){
 	
 	/*** UDP socket's creation ***/
 	if((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+		perror("Error while creating socket ");
+		exit(EXIT_FAILURE);
+	}
+	/*** TCP socket's creation ***/
+	if((tcpsockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1){
 		perror("Error while creating socket ");
 		exit(EXIT_FAILURE);
 	}
@@ -68,6 +73,12 @@ int main(int argc, char* argv[]){
 		printf("Dims to calculate : %d x %d ",dim.height,dim.width);
 		if(1/*DIMENSIONS POSSIBLES A CALCULER ??? */){
 			printf("possible, etablishing TCP session.\n");
+			if(connect(tcpsockfd, (struct sockaddr*)&viewerAddress, sizeof(viewerAddress)) == -1) {
+    			perror("Erreur lors de la connexion ");
+    			exit(EXIT_FAILURE);
+  			} else {
+  				printf("Connexion TCP établie.\n");
+  			}
 			*msg='o';
 		} else {
 			printf("impossible, too heavy.\n");
@@ -78,6 +89,9 @@ int main(int argc, char* argv[]){
 			exit(EXIT_FAILURE);
 		} 
 	}	
+	if(strcmp(msg,"o")==0){
+		printf("gogoo");
+	}
 	
 	/*** Socket closing ***/
 	if(close(sockfd) == -1) {
