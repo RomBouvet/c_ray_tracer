@@ -2,7 +2,7 @@
 # CONFIGURATION GENERALE
 #
 
-EXEC = rayt viewer client
+EXEC = rayt viewer client controller
 OBJETS = ncurses.o scene.o
 NOM_PROJET = projet_2017
 
@@ -24,7 +24,7 @@ OBJETS_O = $(OBJETS) $(EXEC_O)
 #
 
 CC = gcc
-CCFLAGS_STD = -Wall -O3 -Werror -ansi -pedantic
+CCFLAGS_STD = -Wall -O3 -ansi -pedantic
 CCFLAGS_DEBUG = -D _DEBUG_
 CCFLAGS = $(CCFLAGS_STD)
 CCLIBS = -lm -lncurses
@@ -88,6 +88,7 @@ archive: clean
 	@echo "Termine."
 
 # DEPENDANCES
+controller.o: controller.c controller.h cst.h
 ncurses.o: ncurses.c ncurses.h
 scene.o: scene.c scene.h ncurses.h
-rayt.o: rayt.c ncurses.h include.h scene.h
+rayt.o: rayt.c ncurses.h cst.h scene.h
