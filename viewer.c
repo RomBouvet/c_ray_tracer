@@ -28,6 +28,13 @@ int main(int argc, char* argv[]){
  	socklen_t len;
  	dimensions_t dim[MAX_CUSTOMERS];
  	
+ 	/*** args verification ***/
+	if(argc!=2+MAX_CUSTOMERS){
+	 	fprintf(stderr,"Use : %s UDPPort TCPPort[1] ... TCPPort[n] \n",argv[0]);
+	 	fprintf(stderr,"where :\n-> UDPPort : n° of viewer's UDP Port.\n-> TCPPort[n] : the differents n° of TCP Ports (1 for each possible customer -> here : %d)\n",MAX_CUSTOMERS);  
+	 	exit(EXIT_FAILURE);
+	}
+	
  	
  	/*** Initialization ***/
  	len=sizeof(struct sockaddr_in);
@@ -41,13 +48,6 @@ int main(int argc, char* argv[]){
  		dim[i].width=(MAX_WIDTH/MAX_CUSTOMERS);
  	}
  	
- 	/*** args verification ***/
-	if(argc!=2+MAX_CUSTOMERS){
-	 	fprintf(stderr,"Use : %s UDPPort TCPPort[1] ... TCPPort[n] \n",argv[0]);
-	 	fprintf(stderr,"where :\n-> UDPPort : n° of viewer's UDP Port.\n-> TCPPort[n] : the differents n° of TCP Ports (1 for each possible customer -> here : %d)\n",MAX_CUSTOMERS);  
-	 	exit(EXIT_FAILURE);
-	}
-	
 	/*** Waiting for a message in msg's queue from controller ***/
 	printf("Waiting for controller...\n");
 	if(msgrcv(msqid,&buf,sizeof(int),0,0) == -1) {
@@ -130,8 +130,10 @@ int main(int argc, char* argv[]){
 					exit(EXIT_FAILURE);
 				}
 				if((tcpSockFd[nbCustomers-1] = accept(tcpSockFd[nbCustomers-1], NULL, NULL)) == -1) {
-					perror("Erreur lors de la demande de connexion ");
+					perror("Erreur lors de la connexion ");
 					exit(EXIT_FAILURE);
+  				} else {
+  					printf("Connexion TCP établie avec %s:%d",inet_ntoa(client.sin_addr),ntohs(client.sin_port));
   				}
 			} else {
 				printf("The customer (%s:%d) can't calculate these dimensions. Abort.\n",inet_ntoa(client.sin_addr),ntohs(client.sin_port));

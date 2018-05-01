@@ -3,4 +3,4 @@ typedef struct{
 	int width;
 }dimensions_t;
 
-#define MSG_QUEUE_ID 1555
+#define MSG_QUEUE_ID 5666
