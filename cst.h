@@ -3,6 +3,10 @@
 
 /* You can change these ones */
 
+#define MSG_KEY 5555
+#define SHM_KEY 6666
+
+#define CLIENT_NB 4
 #define MAX_OBJ 10
 
 /* DO NOT CHANGE */
@@ -14,5 +18,9 @@
 
 #define NO_BORDERS 0
 #define WT_BORDERS 1 
+
+typedef struct{
+    int width,height;
+}dimensions_t;
 
 #endif

@@ -28,7 +28,7 @@ typedef struct {
 
 /* A scene that gathers spheres */
 typedef struct {
-  int nb;             /* Number of spheres in the scene */
+  int nb;             /* Number of objects in the scene */
   area_t area;        /* Area of the scene */
   int empty[MAX_SPHERES]; /* TRUE if it's empty */
   sphere_t objs[MAX_SPHERES]; /* Spheres of the scene */

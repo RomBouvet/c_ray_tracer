@@ -5,7 +5,7 @@
 #include <math.h>
 
 #include "ncurses.h"
-#include "include.h"
+#include "cst.h"
 
 /**
  * Normalize a vector.

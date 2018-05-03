@@ -10,7 +10,6 @@
 #include <unistd.h>
 
 #include "ncurses.h"
-#include "include.h"
 #include "scene.h"
 
 /**
@@ -36,8 +35,8 @@ void create_scene(scene_t *scene) {
 /**
  * Main function.
  * @return EXIT_SUCCESS on success or EXIT_FAILURE on error
- */
-int main() {
+ *
+  int main() {
   WINDOW *window, *display;
   picture_t picture;
   scene_t scene;
@@ -45,11 +44,11 @@ int main() {
   int step_time = 100000;
   int max_timer = 50*1000000;
   
-  /* Initialize the scene and the picture */
+   Initialize the scene and the picture 
   create_scene(&scene);
   picture_initialize(&picture, HEIGHT - 2, WIDTH - 2);
 
-  /* ncurses initialization */
+   ncurses initialization 
   ncurses_initialize();
   ncurses_colors(); 
   if(ncurses_checksize(HEIGHT, WIDTH) == FALSE) {
@@ -58,26 +57,26 @@ int main() {
     exit(EXIT_FAILURE);
   }
   
-  /* colors initialisation : no more colors (ncurses!!!) */
+   colors initialisation : no more colors (ncurses!!!) 
   init_pair(1, COLOR_WHITE, COLOR_BLACK);
   init_pair(2, COLOR_RED, COLOR_RED);
   init_pair(3, COLOR_BLUE, COLOR_BLUE);
   init_pair(4, COLOR_GREEN, COLOR_GREEN);
   init_pair(5, COLOR_YELLOW, COLOR_YELLOW);
   
-  /* Create the window */
+   Create the window 
   bkgd(COLOR_PAIR(1));
   refresh();
   window = newwin(HEIGHT, WIDTH, 0, 0);
   box(window,0,0);
   display = subwin(window, HEIGHT - 2, WIDTH - 2, 1, 1);
 
-  /* Compute first picture */
+   Compute first picture 
   launch_rays(&scene, &picture); 
   update_window(display, &picture);
   wrefresh(window);
 
-  /* Main loop */
+   Main loop 
   while(timer < max_timer){
     werase(display);
     scene_update(&scene);
@@ -88,15 +87,15 @@ int main() {
     timer += step_time;
   }
 
-  /* Delete window */
+   Delete window 
   delwin(display);
   delwin(window);
 
-  /* Free ressources */
+   Free ressources 
   picture_delete(&picture);
   
-  /* Stop ncurses */
+   Stop ncurses 
   ncurses_stop();
 
   return EXIT_SUCCESS;
-}
+}*/

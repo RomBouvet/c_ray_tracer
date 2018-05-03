@@ -12,26 +12,23 @@
 #include <arpa/inet.h>   
 #include <string.h>     
 #include <unistd.h> 
-#include "util.h"
 
-#define MAX_CUSTOMERS 4
-#define MAX_WIDTH 24
-#define MAX_HEIGHT 16
+#include "cst.h"
     
 int main(int argc, char* argv[]){
 	/*** Declaration ***/
 	int msqid,buf,i,udpSockFd,nbCustomers=0;
-	int tcpSockFd[MAX_CUSTOMERS];
+	int tcpSockFd[CLIENT_NB];
 	char* msg;
  	struct sockaddr_in Address;
  	struct sockaddr_in client;
  	socklen_t len;
- 	dimensions_t dim[MAX_CUSTOMERS];
+ 	dimensions_t dim[CLIENT_NB];
  	
  	/*** args verification ***/
-	if(argc!=2+MAX_CUSTOMERS){
+	if(argc!=2+CLIENT_NB){
 	 	fprintf(stderr,"Use : %s UDPPort TCPPort[1] ... TCPPort[n] \n",argv[0]);
-	 	fprintf(stderr,"where :\n-> UDPPort : n° of viewer's UDP Port.\n-> TCPPort[n] : the differents n° of TCP Ports (1 for each possible customer -> here : %d)\n",MAX_CUSTOMERS);  
+	 	fprintf(stderr,"where :\n-> UDPPort : n° of viewer's UDP Port.\n-> TCPPort[n] : the differents n° of TCP Ports (1 for each possible customer -> here : %d)\n",CLIENT_NB);  
 	 	exit(EXIT_FAILURE);
 	}
 	
@@ -39,14 +36,15 @@ int main(int argc, char* argv[]){
  	/*** Initialization ***/
  	len=sizeof(struct sockaddr_in);
  	msg=(char*) malloc(sizeof(char));
- 	if((msqid = msgget((key_t)MSG_QUEUE_ID, 0)) == -1) {
-   	perror("Error while getting message's queue ");
-   	exit(EXIT_FAILURE);
+ 	if((msqid = msgget((key_t)MSG_KEY, 0)) == -1) {
+		perror("Error while getting message's queue ");
+		exit(EXIT_FAILURE);
  	}
- 	for(i=0;i<MAX_CUSTOMERS;i++){
- 		dim[i].height=(MAX_HEIGHT/MAX_CUSTOMERS);
- 		dim[i].width=(MAX_WIDTH/MAX_CUSTOMERS);
- 	}
+
+ 	/*for(i=0;i<CLIENT_NB;i++){
+ 		dim[i].height=(MAX_HEIGHT/CLIENT_NB);
+ 		dim[i].width=(MAX_WIDTH/CLIENT_NB);
+ 	}*/
  	
 	/*** Waiting for a message in msg's queue from controller ***/
 	printf("Waiting for controller...\n");
@@ -62,7 +60,8 @@ int main(int argc, char* argv[]){
 		perror("Error while creating socket ");
 		exit(EXIT_FAILURE);
 	}
-	for(i=0;i<MAX_CUSTOMERS;i++){
+	
+	for(i=0;i<CLIENT_NB;i++){
 		if((tcpSockFd[i] = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
 			perror("Error while creating socket ");
 			exit(EXIT_FAILURE);
@@ -82,7 +81,7 @@ int main(int argc, char* argv[]){
 	}
 	
 	/*** tcp sockets bind ***/
-	for(i=2;i<2+MAX_CUSTOMERS;i++){
+	for(i=2;i<2+CLIENT_NB;i++){
 		Address.sin_port = htons(atoi(argv[i]));
 		if(bind(tcpSockFd[i-2], (struct sockaddr*)&Address, sizeof(struct sockaddr_in)) == -1) {
 			perror("Error while binding tcp socket ");
@@ -98,7 +97,7 @@ int main(int argc, char* argv[]){
 		printf("Query from customer (%s:%d)\n",inet_ntoa(client.sin_addr),ntohs(client.sin_port));
 		
 		/*** Verification if there's not too many customers ***/
-		if(nbCustomers+1<=MAX_CUSTOMERS){
+		if(nbCustomers+1<=CLIENT_NB){
 			*msg='o'; /* OK */
 		} else {
 			*msg='k'; /* KO */
@@ -149,7 +148,7 @@ int main(int argc, char* argv[]){
 		perror("Error while closing udp socket ");
 		exit(EXIT_FAILURE);
 	}
-	for(i=0;i<MAX_CUSTOMERS;i++){
+	for(i=0;i<CLIENT_NB;i++){
 		if(close(tcpSockFd[i]) == -1) {
 			perror("Error while closing tcp socket ");
 			exit(EXIT_FAILURE);
