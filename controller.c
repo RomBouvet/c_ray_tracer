@@ -108,6 +108,11 @@ int main(int argc, char *argv[]){
 	wprintw(info_window,"CONTROLLER STARTED\n");
 	wrefresh(info_window);
 
+
+    if(scene->empty[0]==TRUE){
+        wprintw(info_window,"blablabla\n");
+    }
+
 	/*** Sending start message ***/
 	if(msgsnd(msgid,&buf,sizeof(buf),0)==-1){
 		perror("Error while sending message ");

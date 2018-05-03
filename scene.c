@@ -89,6 +89,26 @@ void scene_add(scene_t *scene, unsigned int index, sphere_t *sphere, vector_t *d
 }
 
 /**
+ * Add a sphere to a scene.
+ * @param scene the scene
+ * @param index the index
+ * @param sphere the sphere
+ * @param direction the direction
+ */
+void scene_add_new(scene_t *scene, unsigned int index) {
+  sphere_t sphere={ {0. ,0. ,0.}, 0., 0};
+  vector_t direction={0. ,0. ,0.};
+  if(index < MAX_SPHERES) {
+    if(scene->empty[index] == TRUE) {
+      scene->nb++;
+      scene->empty[index] = FALSE;
+    }
+    scene->objs[index] = sphere;
+    scene->directions[index] = direction;
+  }
+}
+
+/**
  * Check if a ray intersects a sphere.
  * @param r the ray
  * @param c the sphere
