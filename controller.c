@@ -50,6 +50,7 @@ int main(int argc, char *argv[]){
         perror("Erreur lors de l'attachement du segment de memoire partagee ");
         exit(EXIT_FAILURE);
     }
+    
     scene=scene_pointer;
 
     create_scene(scene);
@@ -106,7 +107,7 @@ int main(int argc, char *argv[]){
 	if(msgsnd(msgid,&buf,sizeof(buf),0)==-1){
 		perror("Error while sending message ");
 	} else {
-		wprintw(info_window,"STARTING - MESSAGE SENT TO MESSAGE'S QUEUE\n");
+		wprintw(info_window,"MESSAGE SENT TO MESSAGE'S QUEUE\n");
 	}	
     
 	wrefresh(info_window);
@@ -120,56 +121,114 @@ int main(int argc, char *argv[]){
                             case 16:
                             case 17:
                             case 18:
-                                wprintw(info_window,"X INPUT (%d)\n",mouse_y-5);
+                                if(button & BUTTON1_CLICKED){
+                                    incr_data(scene,mouse_y-5,0);
+                                }
+                                if(button & BUTTON3_CLICKED){
+                                    decr_data(scene,mouse_y-5,0);
+                                }
+                                werase(data[mouse_y-5][0]);
+                                wprintw(data[mouse_y-5][0],"%.2f",scene->objs[mouse_y-5].center.x);
+                                wrefresh(data[mouse_y-5][0]);
                                 break;
 
                             case 22:
                             case 23:
                             case 24:
                             case 25:
-                                wprintw(info_window,"Y INPUT\n");
+                                if(button & BUTTON1_CLICKED){
+                                    incr_data(scene,mouse_y-5,1);
+                                }
+                                if(button & BUTTON3_CLICKED){
+                                    decr_data(scene,mouse_y-5,1);
+                                }
+                                werase(data[mouse_y-5][1]);
+                                wprintw(data[mouse_y-5][1],"%.2f",scene->objs[mouse_y-5].center.y);
+                                wrefresh(data[mouse_y-5][1]);
                                 break;
 
                             case 29:
                             case 30:
                             case 31:
                             case 32:
-                                wprintw(info_window,"Z INPUT\n");
+                                if(button & BUTTON1_CLICKED){
+                                    incr_data(scene,mouse_y-5,2);
+                                }
+                                if(button & BUTTON3_CLICKED){
+                                    decr_data(scene,mouse_y-5,2);
+                                }
+                                werase(data[mouse_y-5][2]);
+                                wprintw(data[mouse_y-5][2],"%.2f",scene->objs[mouse_y-5].center.z);
+                                wrefresh(data[mouse_y-5][2]);
                                 break;
 
                             case 36:
                             case 37:
                             case 38:
                             case 39:
-                                wprintw(info_window,"R INPUT\n");
+                                if(button & BUTTON1_CLICKED){
+                                    incr_data(scene,mouse_y-5,3);
+                                }
+                                if(button & BUTTON3_CLICKED){
+                                    decr_data(scene,mouse_y-5,3);
+                                };
+                                werase(data[mouse_y-5][3]);
+                                wprintw(data[mouse_y-5][3],"%.2f",scene->objs[mouse_y-5].radius);
+                                wrefresh(data[mouse_y-5][3]);
                                 break;
                             
                             case 43:
                             case 44:
                             case 45:
                             case 46:
-                                wprintw(info_window,"C INPUT\n");
+                                incr_data(scene,mouse_y-5,4);
+                                wbkgd(data[mouse_y-5][4],COLOR_PAIR(scene->objs[mouse_y-5].color));
+                                wrefresh(data[mouse_y-5][4]);
                                 break;
                             
                             case 50:
                             case 51:
                             case 52:
                             case 53:
-                                wprintw(info_window,"X INPUT\n");
+                                if(button & BUTTON1_CLICKED){
+                                    incr_data(scene,mouse_y-5,5);
+                                }
+                                if(button & BUTTON3_CLICKED){
+                                    decr_data(scene,mouse_y-5,5);
+                                };
+                                werase(data[mouse_y-5][5]);
+                                wprintw(data[mouse_y-5][5],"%.2f",scene->directions[mouse_y-5].x);
+                                wrefresh(data[mouse_y-5][5]);
                                 break;
                             
                             case 57:
                             case 58:
                             case 59:
                             case 60:
-                                wprintw(info_window,"Y INPUT\n");
+                                if(button & BUTTON1_CLICKED){
+                                    incr_data(scene,mouse_y-5,6);
+                                }
+                                if(button & BUTTON3_CLICKED){
+                                    decr_data(scene,mouse_y-5,6);
+                                };
+                                werase(data[mouse_y-5][6]);
+                                wprintw(data[mouse_y-5][6],"%.2f",scene->directions[mouse_y-5].y);
+                                wrefresh(data[mouse_y-5][6]);
                                 break;
 
                             case 64:
                             case 65:
                             case 66:
                             case 67:
-                                wprintw(info_window,"Z INPUT\n");
+                                if(button & BUTTON1_CLICKED){
+                                    incr_data(scene,mouse_y-5,7);
+                                }
+                                if(button & BUTTON3_CLICKED){
+                                    decr_data(scene,mouse_y-5,7);
+                                };
+                                werase(data[mouse_y-5][7]);
+                                wprintw(data[mouse_y-5][7],"%.2f",scene->directions[mouse_y-5].z);
+                                wrefresh(data[mouse_y-5][7]);
                                 break;
 
                             case 71:
@@ -202,13 +261,6 @@ int main(int argc, char *argv[]){
                                 break;
                         }
                     }
-                        
-                    /*if(button & BUTTON1_CLICKED){
-                        wprintw(info_window,"Clic bouton 1 a la position (%d, %d)\n", mouse_x, mouse_y);
-                    }
-                    if(button & BUTTON3_CLICKED){
-                        wprintw(info_window,"Clic bouton 3 a la position (%d, %d)\n", mouse_x, mouse_y);
-                    }*/
                 }
                 wrefresh(info_window);
                 break;

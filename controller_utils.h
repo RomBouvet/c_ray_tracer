@@ -11,4 +11,8 @@ void add_remove(scene_t *scene,int id);
 
 void changeData(scene_t *scene, int obj_id, int data_id);
 
+void incr_data(scene_t *scene, int obj_id, int data_id);
+
+void decr_data(scene_t *scene, int obj_id, int data_id);
+
 #endif
