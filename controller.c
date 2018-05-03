@@ -9,22 +9,11 @@
 #include <unistd.h> 
 #include <errno.h>      
 
+#include "controller_utils.h"
 
 #include "ncurses.h"
 #include "scene.h"
-#include "controller.h"
 #include "cst.h"
-
-/**
- * Create the scene.
- * @param scene the scene
- */
-void create_scene(scene_t *scene) {
-    area_t area = { -30., 30., -30., 30., -30, 30. }; 
-    vector_t camera = { 0., 0., -30 };
-
-    scene_initialize(scene, &area, &camera, 0.018);
-}
 
 int main(int argc, char *argv[]){
     int i,j,msgid,shmid,mouse_x,mouse_y,button,ch,buf=6;
@@ -42,12 +31,17 @@ int main(int argc, char *argv[]){
 		exit(EXIT_FAILURE);
 	}
 
+    if((shmid = shmget((key_t)SHM_KEY, 0, 0)) != -1) {
+        /* Suppression du segment de memoire partagee */
+        if(shmctl(shmid, IPC_RMID, 0) == -1) {
+            perror("Erreur lors de la suppression du segment de memoire partagee ");
+            exit(EXIT_FAILURE);
+        }
+    }
+
     /* Creation du segment contenant la scene */
     if((shmid = shmget((key_t)SHM_KEY, sizeof(scene_t), S_IRUSR | S_IWUSR | IPC_CREAT | IPC_EXCL)) == -1) {
-        if(errno == EEXIST)
-        fprintf(stderr, "Le segment de memoire partagee (cle=%d) existe deja\n", SHM_KEY);
-        else
-            perror("Erreur lors de la creation du segment de memoire ");
+        perror("Erreur lors de la creation du segment de memoire ");
         exit(EXIT_FAILURE);
     }
 
@@ -99,19 +93,14 @@ int main(int argc, char *argv[]){
             data[i][j]=display_newdata(obj_windows[i],i,j);
         }
 
-        data[i][j]=display_newdata(obj_windows[i],i,9);
-        data[i][j]=display_newdata(obj_windows[i],i,10);
+        data[i][9]=display_newdata(obj_windows[i],i,9);
+        data[i][10]=display_newdata(obj_windows[i],i,10);
        
         wrefresh(obj_windows[i]);
     }
     
 	wprintw(info_window,"CONTROLLER STARTED\n");
 	wrefresh(info_window);
-
-
-    if(scene->empty[0]==TRUE){
-        wprintw(info_window,"blablabla\n");
-    }
 
 	/*** Sending start message ***/
 	if(msgsnd(msgid,&buf,sizeof(buf),0)==-1){
@@ -194,7 +183,15 @@ int main(int argc, char *argv[]){
                             case 79:
                             case 80:
                             case 81:
-                                wprintw(info_window,"ADD/DELETE\n");
+                                add_remove(scene,mouse_y-5);
+                                if(scene->empty[mouse_y-5]==TRUE){
+                                    wprintw(info_window,"Removed object %d\n",mouse_y-5);
+                                    wbkgd(data[mouse_y-5][9],COLOR_PAIR(6));
+                                }else{
+                                    wprintw(info_window,"Added object %d\n",mouse_y-5);
+                                    wbkgd(data[mouse_y-5][9],COLOR_PAIR(5));
+                                }
+                                wrefresh(data[mouse_y-5][9]);
                                 break;
 
                             case 85:

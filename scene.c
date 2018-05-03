@@ -89,11 +89,9 @@ void scene_add(scene_t *scene, unsigned int index, sphere_t *sphere, vector_t *d
 }
 
 /**
- * Add a sphere to a scene.
+ * Add a new sphere to a scene.
  * @param scene the scene
  * @param index the index
- * @param sphere the sphere
- * @param direction the direction
  */
 void scene_add_new(scene_t *scene, unsigned int index) {
   sphere_t sphere={ {0. ,0. ,0.}, 0., 0};
@@ -105,6 +103,13 @@ void scene_add_new(scene_t *scene, unsigned int index) {
     }
     scene->objs[index] = sphere;
     scene->directions[index] = direction;
+  }
+}
+
+void scene_remove(scene_t *scene, unsigned int id){
+  if(scene->empty[id]==FALSE){
+    scene->nb--;
+    scene->empty[id]=TRUE;
   }
 }
 

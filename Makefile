@@ -2,8 +2,8 @@
 # CONFIGURATION GENERALE
 #
 
-EXEC = viewer client controller clean_key
-OBJETS = ncurses.o scene.o
+EXEC = viewer client controller clean_msg_key clean_shm_key
+OBJETS = ncurses.o scene.o controller_utils.o
 NOM_PROJET = projet_2017
 
 #
@@ -33,7 +33,7 @@ CCLIBS = -lm -lncurses
 # REGLES
 #
 
-all: msg $(OBJETS) $(EXEC_O)
+all: msg $(OBJETS_O) $(EXEC_O)
 	@echo "Creation des executables..."
 	@for i in $(EXEC); do \
 	$(CC) -o $$i $$i.o $(OBJETS) $(CCLIBS); \
@@ -66,7 +66,7 @@ clean:
 	@echo "Termine."
 
 depend:
-	@echo "Creation des dependances..."
+	@echo "Creation des dependances..."akefil
 	@sed -e "/^# DEPENDANCES/,$$ d" makefile > dependances
 	@echo "# DEPENDANCES" >> dependances
 	@for i in $(OBJETS_O); do \
@@ -88,7 +88,8 @@ archive: clean
 	@echo "Termine."
 
 # DEPENDANCES
-controller.o: controller.c controller.h cst.h
+controller.o:controller.c controller_utils.h cst.h scene.h ncurses.h
+controller_utils.o: controller_utils.c controller_utils.h cst.h
 viewer.o: viewer.c cst.h
 ncurses.o: ncurses.c ncurses.h
 scene.o: scene.c scene.h ncurses.h

@@ -89,6 +89,15 @@ void scene_initialize(scene_t *scene, area_t *area, vector_t *camera, double foc
 void scene_add(scene_t *scene, unsigned int index, sphere_t *sphere, vector_t *direction);
 
 /**
+ * Add a sphere to a scene.
+ * @param scene the scene
+ * @param index the index
+ */
+void scene_add_new(scene_t *scene, unsigned int index);
+
+void scene_remove(scene_t *scene, unsigned int index);
+
+/**
  * Check if a ray intersects a sphere.
  * @param r the ray
  * @param c the sphere
