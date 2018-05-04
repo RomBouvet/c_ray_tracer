@@ -12,23 +12,29 @@
 #include <arpa/inet.h>   
 #include <string.h>     
 #include <unistd.h> 
+#include "util.h"
 
-#include "cst.h"
+#define MAX_CUSTOMERS 4
+#define MAX_WIDTH 24
+#define MAX_HEIGHT 16
     
 int main(int argc, char* argv[]){
 	/*** Declaration ***/
 	int msqid,buf,i,udpSockFd,nbCustomers=0;
-	int tcpSockFd[CLIENT_NB];
+	int tcpSockFd[MAX_CUSTOMERS],sockfd[MAX_CUSTOMERS];
+	pid_t fils[MAX_CUSTOMERS];
 	char* msg;
  	struct sockaddr_in Address;
+ 	struct sockaddr_in Clients[MAX_CUSTOMERS];
  	struct sockaddr_in client;
  	socklen_t len;
- 	dimensions_t dim[CLIENT_NB];
+ 	dimensions_t dim[MAX_CUSTOMERS];
+ 	char buffer[512];
  	
  	/*** args verification ***/
-	if(argc!=2+CLIENT_NB){
+	if(argc!=2+MAX_CUSTOMERS){
 	 	fprintf(stderr,"Use : %s UDPPort TCPPort[1] ... TCPPort[n] \n",argv[0]);
-	 	fprintf(stderr,"where :\n-> UDPPort : n° of viewer's UDP Port.\n-> TCPPort[n] : the differents n° of TCP Ports (1 for each possible customer -> here : %d)\n",CLIENT_NB);  
+	 	fprintf(stderr,"where :\n-> UDPPort : n° of viewer's UDP Port.\n-> TCPPort[n] : the differents n° of TCP Ports (1 for each possible customer -> here : %d)\n",MAX_CUSTOMERS);  
 	 	exit(EXIT_FAILURE);
 	}
 	
@@ -36,15 +42,14 @@ int main(int argc, char* argv[]){
  	/*** Initialization ***/
  	len=sizeof(struct sockaddr_in);
  	msg=(char*) malloc(sizeof(char));
- 	if((msqid = msgget((key_t)MSG_KEY, 0)) == -1) {
-		perror("Error while getting message's queue ");
-		exit(EXIT_FAILURE);
+ 	if((msqid = msgget((key_t)MSG_QUEUE_ID, 0)) == -1) {
+   	perror("Error while getting message's queue ");
+   	exit(EXIT_FAILURE);
  	}
-
- 	/*for(i=0;i<CLIENT_NB;i++){
- 		dim[i].height=(MAX_HEIGHT/CLIENT_NB);
- 		dim[i].width=(MAX_WIDTH/CLIENT_NB);
- 	}*/
+ 	for(i=0;i<MAX_CUSTOMERS;i++){
+ 		dim[i].height=(MAX_HEIGHT/MAX_CUSTOMERS);
+ 		dim[i].width=(MAX_WIDTH/MAX_CUSTOMERS);
+ 	}
  	
 	/*** Waiting for a message in msg's queue from controller ***/
 	printf("Waiting for controller...\n");
@@ -60,9 +65,8 @@ int main(int argc, char* argv[]){
 		perror("Error while creating socket ");
 		exit(EXIT_FAILURE);
 	}
-	
-	for(i=0;i<CLIENT_NB;i++){
-		if((tcpSockFd[i] = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
+	for(i=0;i<MAX_CUSTOMERS;i++){
+		if((sockfd[i] = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
 			perror("Error while creating socket ");
 			exit(EXIT_FAILURE);
 		}
@@ -81,10 +85,14 @@ int main(int argc, char* argv[]){
 	}
 	
 	/*** tcp sockets bind ***/
-	for(i=2;i<2+CLIENT_NB;i++){
+	for(i=2;i<2+MAX_CUSTOMERS;i++){
 		Address.sin_port = htons(atoi(argv[i]));
-		if(bind(tcpSockFd[i-2], (struct sockaddr*)&Address, sizeof(struct sockaddr_in)) == -1) {
+		if(bind(sockfd[i-2], (struct sockaddr*)&Address, sizeof(struct sockaddr_in)) == -1) {
 			perror("Error while binding tcp socket ");
+			exit(EXIT_FAILURE);
+		}
+		if(listen(sockfd[i-2], 1) == -1) {
+			perror("Erreur lors de la mise en mode passif ");
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -97,7 +105,7 @@ int main(int argc, char* argv[]){
 		printf("Query from customer (%s:%d)\n",inet_ntoa(client.sin_addr),ntohs(client.sin_port));
 		
 		/*** Verification if there's not too many customers ***/
-		if(nbCustomers+1<=CLIENT_NB){
+		if(nbCustomers+1<=MAX_CUSTOMERS){
 			*msg='o'; /* OK */
 		} else {
 			*msg='k'; /* KO */
@@ -121,19 +129,25 @@ int main(int argc, char* argv[]){
 				exit(EXIT_FAILURE);
 			}
 			if(strcmp(msg,"o")==0){
-				nbCustomers++;
 				printf("The customer (%s:%d) can calculate these dimensions. Etablishing TCP session...\n",inet_ntoa(client.sin_addr),ntohs(client.sin_port));
-				/*** Etablishing TCP session ***/
-				if(listen(tcpSockFd[nbCustomers-1], 1) == -1) {
-					perror("Erreur lors de la mise en mode passif ");
-					exit(EXIT_FAILURE);
-				}
-				if((tcpSockFd[nbCustomers-1] = accept(tcpSockFd[nbCustomers-1], NULL, NULL)) == -1) {
-					perror("Erreur lors de la connexion ");
-					exit(EXIT_FAILURE);
-  				} else {
-  					printf("Connexion TCP établie avec %s:%d",inet_ntoa(client.sin_addr),ntohs(client.sin_port));
-  				}
+				if((tcpSockFd[nbCustomers] = accept(sockfd[nbCustomers],(struct sockaddr*)&Clients[nbCustomers], &len)) == -1) {
+						perror("Erreur lors de la connexion ");
+						exit(EXIT_FAILURE);
+  					}
+  					printf("Connexion TCP établie avec %s:%d\n",inet_ntoa(client.sin_addr),ntohs(client.sin_port));
+  					nbCustomers++;
+  					if(fork()==0){
+  						close(sockfd[nbCustomers-1]);
+  						while(1){
+							recv(tcpSockFd[nbCustomers-1], buffer, 512, 0);
+							if(strcmp(buffer,"exit")==0){
+								printf("Deconnexion du client %d (%s:%d)\n",nbCustomers-1,inet_ntoa(client.sin_addr),ntohs(client.sin_port));
+								break;
+							}
+							printf("Client %d (%s:%d) sent : '%s'\n", nbCustomers-1,inet_ntoa(client.sin_addr),ntohs(client.sin_port), buffer);
+							bzero(buffer, sizeof(buffer));
+						}
+  					}
 			} else {
 				printf("The customer (%s:%d) can't calculate these dimensions. Abort.\n",inet_ntoa(client.sin_addr),ntohs(client.sin_port));
 			}
@@ -148,7 +162,7 @@ int main(int argc, char* argv[]){
 		perror("Error while closing udp socket ");
 		exit(EXIT_FAILURE);
 	}
-	for(i=0;i<CLIENT_NB;i++){
+	for(i=0;i<MAX_CUSTOMERS;i++){
 		if(close(tcpSockFd[i]) == -1) {
 			perror("Error while closing tcp socket ");
 			exit(EXIT_FAILURE);

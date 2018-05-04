@@ -1,4 +1,4 @@
-/**
+ 		/**
  * A ray tracor customer.
  * @author Romain Bouvet, Kevin Fernagut
  * @version 10/04/2018
@@ -11,7 +11,7 @@
 #include <string.h>     
 #include <unistd.h>  
 #include <string.h>
-#include "cst.h"
+#include "util.h"
     
 
 int main(int argc, char* argv[]){
@@ -21,6 +21,7 @@ int main(int argc, char* argv[]){
  	struct sockaddr_in viewerAddress;
  	msg=(char*) malloc(sizeof(char));
  	*msg='r';
+ 	char buffer[512];
  
  	/*** args verification ***/
 	if(argc!=4){
@@ -91,8 +92,12 @@ int main(int argc, char* argv[]){
     			exit(EXIT_FAILURE);
   		}
   		printf("Connexion TCP établie.\n");
-  
-	}
+  		while(1){
+			printf("Client: \t");
+			scanf("%s", &buffer[0]);
+			send(tcpsockfd, buffer, strlen(buffer), 0);
+		}
+  }
 	
 	/*** Socket closing ***/
 	if(close(sockfd) == -1) {
