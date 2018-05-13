@@ -22,7 +22,6 @@ int main(int argc, char* argv[]){
 	/*** Declaration ***/
 	int msqid,buf,i,udpSockFd,nbCustomers=0;
 	int tcpSockFd[MAX_CUSTOMERS],sockfd[MAX_CUSTOMERS];
-	pid_t fils[MAX_CUSTOMERS];
 	char* msg;
  	struct sockaddr_in Address;
  	struct sockaddr_in Clients[MAX_CUSTOMERS];
@@ -145,7 +144,7 @@ int main(int argc, char* argv[]){
 								break;
 							}
 							printf("Client %d (%s:%d) sent : '%s'\n", nbCustomers-1,inet_ntoa(client.sin_addr),ntohs(client.sin_port), buffer);
-							bzero(buffer, sizeof(buffer));
+							memset(buffer, 0, sizeof(buffer));
 						}
   					}
 			} else {

@@ -17,11 +17,8 @@
 int main(int argc, char* argv[]){
 	int sockfd,tcpsockfd;
 	dimensions_t dim;
-	char* msg;
+	char msg='r', buffer;
  	struct sockaddr_in viewerAddress;
- 	msg=(char*) malloc(sizeof(char));
- 	*msg='r';
- 	char buffer[512];
  
  	/*** args verification ***/
 	if(argc!=4){
@@ -51,19 +48,19 @@ int main(int argc, char* argv[]){
 	}
 	
 	/*** Sending request ***/
-	if(sendto(sockfd,msg,sizeof(unsigned char), 0, (struct sockaddr*)&viewerAddress, sizeof(struct sockaddr_in)) == -1) {
+	if(sendto(sockfd,&msg,sizeof(unsigned char), 0, (struct sockaddr*)&viewerAddress, sizeof(struct sockaddr_in)) == -1) {
 		perror("Error while sending request ");
 		exit(EXIT_FAILURE);
 	} 
 	printf("Customer : request sent\n");
 	
 	/*** Waiting for viewer's answer ***/
-	if(recvfrom(sockfd, msg, sizeof(char), 0,NULL,NULL) == -1) {
+	if(recvfrom(sockfd, &msg, sizeof(char), 0,NULL,NULL) == -1) {
 		perror("Error while receiving message ");
 		exit(EXIT_FAILURE);
 	}
 	/*** Check if connection is possible or not and verification of dimensions ***/
-	if(strcmp(msg,"k")==0){ /*** Impossible ***/
+	if(msg=='k'){ /*** Impossible ***/
 		fprintf(stderr,"Too much customers connected to the viewer. Try again later\n");
 	} else { 	/*** Possible ***/
 		printf("Waiting for dimensions...\n");
@@ -74,18 +71,18 @@ int main(int argc, char* argv[]){
 		printf("Dims to calculate : %d x %d ",dim.height,dim.width);
 		if(1/*DIMENSIONS POSSIBLES A CALCULER ??? */){
 			printf("possible, etablishing TCP session.\n");
-			*msg='o';
+			msg='o';
 		} else {
 			printf("impossible, too heavy.\n");
-			*msg='k';
+			msg='k';
 		}
-		if(sendto(sockfd,msg,sizeof(unsigned char),0,(struct sockaddr*)&viewerAddress,sizeof(struct sockaddr_in)) == -1) {
+		if(sendto(sockfd,&msg,sizeof(unsigned char),0,(struct sockaddr*)&viewerAddress,sizeof(struct sockaddr_in)) == -1) {
 			perror("Error while sending answer ");
 			exit(EXIT_FAILURE);
 		} 
 	}	
 	/*** principal loop, with TCP connection ***/
-	if(strcmp(msg,"o")==0){
+	if(msg=='o'){
 		viewerAddress.sin_port = htons(atoi(argv[3]));
 		if(connect(tcpsockfd, (struct sockaddr*)&viewerAddress, sizeof(viewerAddress)) == -1) {
     			perror("Erreur lors de la connexion ");
@@ -94,8 +91,8 @@ int main(int argc, char* argv[]){
   		printf("Connexion TCP établie.\n");
   		while(1){
 			printf("Client: \t");
-			scanf("%s", &buffer[0]);
-			send(tcpsockfd, buffer, strlen(buffer), 0);
+			scanf("%c", &buffer);
+			send(tcpsockfd, &buffer, 1, 0);
 		}
   }
 	
@@ -104,8 +101,6 @@ int main(int argc, char* argv[]){
 		perror("Error while closing socket ");
 		exit(EXIT_FAILURE);
 	}
-	/*** Memory deallocation ***/
-	free(msg);
  	return EXIT_SUCCESS;
 }
 

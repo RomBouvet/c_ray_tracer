@@ -69,7 +69,12 @@ void scene_initialize(scene_t *scene, area_t *area, vector_t *camera, double foc
   for(i = 0; i < MAX_SPHERES; i++){
     pthread_mutex_init(&scene->mutexs[i],NULL);
     pthread_cond_init(&scene->is_free[i],NULL);
+    pthread_cond_init(&scene->is_moving[i],NULL);
+    scene->objs[i].radius=1;
+    scene->objs[i].color=3;
+    scene->speed[i]=1;
     scene->empty[i] = TRUE;
+    scene->moving[i] = FALSE;
   }
 }
 
@@ -96,10 +101,12 @@ void scene_add(scene_t *scene, unsigned int index, sphere_t *sphere, vector_t *d
  * @param index the index
  */
 void scene_add_new(scene_t *scene, unsigned int index) {
-  if(index < MAX_SPHERES) {
-    if(scene->empty[index] == TRUE) {
-      scene->empty[index] = FALSE;
-    }
+  if(index >+ MAX_SPHERES)
+    return;
+
+  if(scene->empty[index] == TRUE) {
+    scene->empty[index] = FALSE;
+    scene->moving[index] = TRUE;
   }
 }
 
@@ -285,19 +292,12 @@ void sphere_move(scene_t *scene, int index, WINDOW* info_window) {
     status = pthread_mutex_trylock(&scene->mutexs[i]);
 
     if (status != 0){
-      wprintw(info_window,"Thread %d is making a pause at %d\n",index,i);
-      wrefresh(info_window);
-
-      pthread_cond_wait(&scene->is_free[i],&scene->mutexs[i]);
-
-      wprintw(info_window,"Thread %d is going back to work\n",index);
-      wrefresh(info_window);
+      pthread_cond_wait(&scene->is_free[i],&scene->mutexs[index]);
     }else{        
       if((scene->empty[i] == FALSE) &&
             (sphere_collision(&scene->objs[i], &tmp)))
             stop = 1;
 
-      pthread_cond_broadcast(&scene->is_free[i]);
       status=pthread_mutex_unlock(&scene->mutexs[i]);
       if (status != 0)
         wprintw(info_window, "Probleme unlock mutex %d\n",i);

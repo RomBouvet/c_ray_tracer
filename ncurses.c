@@ -139,6 +139,13 @@ void display_obj(int id, scene_t *scene,WINDOW *data[MAX_OBJ][DATA_NB]){
 	wprintw(data[id][2],"%.2f",scene->objs[id].center.z);
 	wrefresh(data[id][2]);
 
+	werase(data[id][3]);
+	wprintw(data[id][3],"%.2f",scene->objs[id].radius);
+	wrefresh(data[id][3]);
+
+	wbkgd(data[id][4],COLOR_PAIR(scene->objs[id].color));
+	wrefresh(data[id][4]);
+
 	werase(data[id][5]);
 	wprintw(data[id][5],"%.2f",scene->directions[id].x);
 	wrefresh(data[id][5]);
@@ -151,7 +158,18 @@ void display_obj(int id, scene_t *scene,WINDOW *data[MAX_OBJ][DATA_NB]){
 	wprintw(data[id][7],"%.2f",scene->directions[id].z);
 	wrefresh(data[id][7]);
 
-	/*werase(data[id][8]);*/
+	werase(data[id][8]);
+	wprintw(data[id][8],"%d",scene->speed[id]);
+	wrefresh(data[id][8]);
+
+	werase(data[id][10]);
+	if(scene->moving[id]==TRUE){
+		mvwprintw(data[id][10],0,1,"||");
+	}
+	else{
+		mvwprintw(data[id][10],0,1,">");
+	}
+	wrefresh(data[id][10]);
 }
 
 int souris_getpos(int *x, int *y, int *bouton) {

@@ -1,4 +1,5 @@
 #define _XOPEN_SOURCE
+#define _BSD_SOURCE
 
 #include <stdlib.h>
 #include <stdio.h>  
@@ -18,32 +19,39 @@
 scene_t *scene;
     WINDOW *bg,*main_window,*info_window_borders,*info_window,*obj_windows[MAX_OBJ],*data[MAX_OBJ][DATA_NB];
 
+pthread_mutex_t windows_mutex=PTHREAD_MUTEX_INITIALIZER;
+
 void* obj_thread(void *arg){
     int status,*id=(int*) arg;
-
-    wprintw(info_window,"Object %d created\n",*id);
-
     while(1){ 
-        sleep(1);
+        usleep(DEFAULT_SPEED/scene->speed[*id]);
 
         status=pthread_mutex_lock(&scene->mutexs[*id]);
         if (status != 0)
             wprintw(info_window, "Probleme lock mutex %d\n",*id);
 
-        sphere_move(scene,*id,info_window);
-        display_obj(*id,scene,data);
-        wrefresh(obj_windows[*id]);
 
-        wprintw(info_window,"Object %d is moving (%f,%f,%f)...\n",*id,scene->objs[*id].center.x,scene->objs[*id].center.y,scene->objs[*id].center.z);
-        wrefresh(info_window);
+        if(scene->moving[*id]==TRUE){
+            status=pthread_mutex_lock(&windows_mutex);
+            if (status != 0)
+                wprintw(info_window, "Probleme lock mutex windows\n");
 
-        pthread_cond_broadcast(&scene->is_free[*id]);
+            sphere_move(scene,*id,info_window);
+            display_obj(*id,scene,data);
+            wrefresh(obj_windows[*id]);
+
+            status=pthread_mutex_unlock(&windows_mutex);
+            if (status != 0)
+                wprintw(info_window,"Probleme unlock mutex windows\n");
+        }else{
+            pthread_cond_wait(&scene->is_moving[*id],&scene->mutexs[*id]);   
+        }      
+         
         status=pthread_mutex_unlock(&scene->mutexs[*id]);
         if (status != 0)
             wprintw(info_window,"Probleme unlock mutex %d\n",*id);
+
         wrefresh(info_window);
-        
-         
     }
     return NULL;
 }
@@ -155,8 +163,6 @@ int main(int argc, char *argv[]){
                         status=pthread_mutex_lock(&scene->mutexs[mouse_y-5]);
                         if (status != 0)
                             wprintw(info_window, "Probleme lock mutex %d\n",mouse_y-5);
-                        else if(mouse_y-5==0)
-                            wprintw(info_window, "Locked mutex %d -> ",mouse_y-5);
 
                         switch(mouse_x){
                             case 15:
@@ -277,7 +283,15 @@ int main(int argc, char *argv[]){
                             case 72:
                             case 73:
                             case 74:
-                                wprintw(info_window,"V INPUT\n");
+                                if(button & BUTTON1_CLICKED){
+                                    incr_data(scene,mouse_y-5,8);
+                                }
+                                if(button & BUTTON3_CLICKED){
+                                    decr_data(scene,mouse_y-5,8);
+                                };
+                                werase(data[mouse_y-5][8]);
+                                wprintw(data[mouse_y-5][8],"%d",scene->speed[mouse_y-5]);
+                                wrefresh(data[mouse_y-5][8]);
                                 break;
 
                             case 78:
@@ -289,17 +303,12 @@ int main(int argc, char *argv[]){
                                     ids[mouse_y-5]=mouse_y-5;
                                     wbkgd(data[mouse_y-5][9],COLOR_PAIR(5));
                                     pthread_create(&obj_threads[mouse_y-5],NULL,obj_thread,&ids[mouse_y-5]);
+                                    wprintw(info_window,"Object %d created\n",mouse_y-5);
                                 }else{
                                     wbkgd(data[mouse_y-5][9],COLOR_PAIR(6));
                                     pthread_cancel(obj_threads[mouse_y-5]);
+                                    wprintw(info_window,"Object %d deleted\n",mouse_y-5);
                                 }
-                                /*if(scene->empty[mouse_y-5]==TRUE){
-                                    wprintw(info_window,"Removed object %d\n",mouse_y-5);
-                                    
-                                }else{
-                                    wprintw(info_window,"Added object %d\n",mouse_y-5);
-                                    wbkgd(data[mouse_y-5][9],COLOR_PAIR(5));
-                                }*/
                                 wrefresh(data[mouse_y-5][9]);
                                 break;
 
@@ -307,11 +316,19 @@ int main(int argc, char *argv[]){
                             case 86:
                             case 87:
                             case 88:
-                            	  wprintw(info_window,"PAUSE/RESUME OBJECT %d\n",mouse_y-5);
+                                werase(data[mouse_y-5][10]);
+                                if(scene->moving[mouse_y-5]==TRUE){
+                                    scene->moving[mouse_y-5]=FALSE;
+                                    mvwprintw(data[mouse_y-5][10],0,1,">");
+                                }
+                                else{
+                                    scene->moving[mouse_y-5]=TRUE;
+                                    pthread_cond_broadcast(&scene->is_moving[mouse_y-5]);
+                                    mvwprintw(data[mouse_y-5][10],0,1,"||");
+                                }
+                                wrefresh(data[mouse_y-5][10]);
                                 break;
                         }
-
-                        pthread_cond_broadcast(&scene->is_free[mouse_y-5]);
                         status=pthread_mutex_unlock(&scene->mutexs[mouse_y-5]);
                         if (status != 0)
                             wprintw(info_window, "Probleme lock mutex %d\n",mouse_y-5);

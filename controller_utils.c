@@ -55,6 +55,10 @@ void incr_data(scene_t *scene, int obj_id, int data_id){
             break;
         case 7:
             scene->directions[obj_id].z++;
+            break;
+        case 8:
+            scene->speed[obj_id]++;
+            break;
     }
 }
 
@@ -70,7 +74,7 @@ void decr_data(scene_t *scene, int obj_id, int data_id){
             scene->objs[obj_id].center.z--;
             break;
         case 3:
-            if(scene->objs[obj_id].radius>0)
+            if(scene->objs[obj_id].radius>1)
                 scene->objs[obj_id].radius--;
             break;
         case 5:
@@ -81,5 +85,10 @@ void decr_data(scene_t *scene, int obj_id, int data_id){
             break;
         case 7:
             scene->directions[obj_id].z--;
+            break;
+        case 8:
+            if(scene->speed[obj_id]>1)
+                scene->speed[obj_id]--;
+            break;
     }
 }

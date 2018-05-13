@@ -7,8 +7,8 @@
 #define SHM_KEY 6666
 
 #define CLIENT_NB 4
-#define MAX_OBJ 10
-#define REFRESH_TIME 1000
+#define MAX_OBJ 5
+#define DEFAULT_SPEED 1000000
 
 /* DO NOT CHANGE */
 

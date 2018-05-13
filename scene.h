@@ -30,11 +30,14 @@ typedef struct {
 /* A scene that gathers spheres */
 typedef struct {
   int empty[MAX_SPHERES]; /* TRUE if it's empty */
+  int moving[MAX_SPHERES];
+  int speed[MAX_SPHERES];
   sphere_t objs[MAX_SPHERES]; /* Spheres of the scene */
   vector_t directions[MAX_SPHERES]; /* Directions of the spheres */
 
   pthread_mutex_t mutexs[MAX_SPHERES];
   pthread_cond_t is_free[MAX_SPHERES];
+  pthread_cond_t is_moving[MAX_SPHERES];
 
   area_t area;        /* Area of the scene */
   vector_t camera;    /* Position of the camera */
