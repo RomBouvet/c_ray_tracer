@@ -12,7 +12,7 @@
 #include <arpa/inet.h>   
 #include <string.h>     
 #include <unistd.h> 
-#include "util.h"
+#include "cst.h"
 
 #define MAX_CUSTOMERS 4
 #define MAX_WIDTH 24
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]){
  	/*** Initialization ***/
  	len=sizeof(struct sockaddr_in);
  	msg=(char*) malloc(sizeof(char));
- 	if((msqid = msgget((key_t)MSG_QUEUE_ID, 0)) == -1) {
+ 	if((msqid = msgget((key_t)MSG_KEY, 0)) == -1) {
    	perror("Error while getting message's queue ");
    	exit(EXIT_FAILURE);
  	}
