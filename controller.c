@@ -47,6 +47,7 @@ void* obj_thread(void *arg){
             pthread_cond_wait(&scene->is_moving[*id],&scene->mutexs[*id]);   
         }      
          
+        pthread_cond_broadcast(&scene->is_free[*id]);
         status=pthread_mutex_unlock(&scene->mutexs[*id]);
         if (status != 0)
             wprintw(info_window,"Probleme unlock mutex %d\n",*id);
@@ -329,6 +330,7 @@ int main(int argc, char *argv[]){
                                 wrefresh(data[mouse_y-5][10]);
                                 break;
                         }
+                        pthread_cond_broadcast(&scene->is_free[mouse_y-5]);
                         status=pthread_mutex_unlock(&scene->mutexs[mouse_y-5]);
                         if (status != 0)
                             wprintw(info_window, "Probleme lock mutex %d\n",mouse_y-5);

@@ -2,17 +2,6 @@
 
 #include "controller_utils.h"
 
-/**
- * Create the scene.
- * @param scene the scene
- */
-void create_scene(scene_t *scene) {
-    area_t area = { -30., 30., -30., 30., -30, 30. }; 
-    vector_t camera = { 0., 0., -30 };
-
-    scene_initialize(scene, &area, &camera, 0.018);
-}
-
 int exists(scene_t *scene,unsigned int id){
     if(scene->empty[id]==TRUE)
         return FALSE;

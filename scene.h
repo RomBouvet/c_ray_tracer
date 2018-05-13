@@ -126,7 +126,7 @@ int launch_ray(ray_t r, scene_t *scene);
  * @param scene the scene
  * @param picture the picture
  */
-void launch_rays(scene_t *scene, picture_t *picture);
+void launch_rays(scene_t *scene, picture_t *picture,int origin_x,int origin_y);
 
 /**
  * Display a picture into a window.
@@ -149,6 +149,8 @@ int sphere_collision(sphere_t *s1, sphere_t *s2);
  * @param index the index of the sphere
  */
 void sphere_move(scene_t *scene, int index, WINDOW *info_window);
+
+void create_scene(scene_t *scene);
 
 
 #endif

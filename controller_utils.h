@@ -3,8 +3,6 @@
 
 #include "scene.h"
 
-void create_scene(scene_t *scene);
-
 int exists(scene_t *scene,unsigned int id);
 
 void add_remove(scene_t *scene,int id);

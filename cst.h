@@ -3,10 +3,13 @@
 
 /* You can change these ones */
 
+#define WIDTH 60
+#define HEIGHT 60
+#define LENGTH 60
+
 #define MSG_KEY 5555
 #define SHM_KEY 6666
 
-#define CLIENT_NB 4
 #define MAX_OBJ 5
 #define DEFAULT_SPEED 1000000
 
@@ -19,6 +22,8 @@
 
 #define NO_BORDERS 0
 #define WT_BORDERS 1 
+
+#define CLIENT_NB 4
 
 typedef struct{
     int width,height;

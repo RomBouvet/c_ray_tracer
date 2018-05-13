@@ -9,6 +9,17 @@
 #include "cst.h"
 
 /**
+ * Create the scene.
+ * @param scene the scene
+ */
+void create_scene(scene_t *scene) {
+    area_t area = {-(WIDTH/2),(WIDTH/2),-(HEIGHT/2),(HEIGHT/2),-(LENGTH/2),(LENGTH/2)}; 
+    vector_t camera = { 0., 0., -30 };
+
+    scene_initialize(scene, &area, &camera, 0.018);
+}
+
+/**
  * Normalize a vector.
  * @param vector the vector
  */
@@ -192,7 +203,7 @@ int launch_ray(ray_t r, scene_t *scene) {
  * @param scene the scene
  * @param picture the picture
  */
-void launch_rays(scene_t *scene, picture_t *picture) {
+void launch_rays(scene_t *scene, picture_t *picture,int origin_x,int origin_y) {
   double step_y = ((double)picture->height)/((double)picture->height)*2.;
   double step_x = ((double)picture->width)/((double)picture->width);
   int i, j;
@@ -203,8 +214,8 @@ void launch_rays(scene_t *scene, picture_t *picture) {
   r.origin = scene->camera;
 
   /* Compute pixels */
-  for(i = 0; i < picture->height; ++i) {
-    for(j = 0; j < picture->width; ++j) {
+  for(i = origin_y; i < origin_y+picture->height; ++i) {
+    for(j = origin_x; j < origin_x+picture->width; ++j) {
       /* Compute the direction of the ray */
       r.direction.x = (r.origin.x - (j * step_x - picture->width / 2.)) * scene->focal;
       r.direction.y = (r.origin.y - (i * step_y - picture->height)) * scene->focal;
@@ -298,6 +309,7 @@ void sphere_move(scene_t *scene, int index, WINDOW* info_window) {
             (sphere_collision(&scene->objs[i], &tmp)))
             stop = 1;
 
+      pthread_cond_broadcast(&scene->is_free[i]);
       status=pthread_mutex_unlock(&scene->mutexs[i]);
       if (status != 0)
         wprintw(info_window, "Probleme unlock mutex %d\n",i);
