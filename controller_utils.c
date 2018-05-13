@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "controller_utils.h"
 
 /**

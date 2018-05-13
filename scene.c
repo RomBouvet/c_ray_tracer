@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <errno.h>
 
 #include "ncurses.h"
 #include "cst.h"
@@ -63,11 +64,13 @@ void scene_initialize(scene_t *scene, area_t *area, vector_t *camera, double foc
   scene->area = *area;
   scene->camera = *camera;
   scene->focal = focal;
-  scene->nb = 0;
   memset(scene->objs, 0, sizeof(scene->objs));
   memset(scene->directions, 0, sizeof(scene->directions));
-  for(i = 0; i < MAX_SPHERES; i++)
+  for(i = 0; i < MAX_SPHERES; i++){
+    pthread_mutex_init(&scene->mutexs[i],NULL);
+    pthread_cond_init(&scene->is_free[i],NULL);
     scene->empty[i] = TRUE;
+  }
 }
 
 /**
@@ -76,17 +79,16 @@ void scene_initialize(scene_t *scene, area_t *area, vector_t *camera, double foc
  * @param index the index
  * @param sphere the sphere
  * @param direction the direction
- */
+
 void scene_add(scene_t *scene, unsigned int index, sphere_t *sphere, vector_t *direction) {
   if(index < MAX_SPHERES) {
     if(scene->empty[index] == TRUE) {
-      scene->nb++;
       scene->empty[index] = FALSE;
     }
     scene->objs[index] = *sphere;
     scene->directions[index] = *direction;
   }
-}
+} */
 
 /**
  * Add a new sphere to a scene.
@@ -94,22 +96,18 @@ void scene_add(scene_t *scene, unsigned int index, sphere_t *sphere, vector_t *d
  * @param index the index
  */
 void scene_add_new(scene_t *scene, unsigned int index) {
-  sphere_t sphere={ {0. ,0. ,0.}, 0., 0};
-  vector_t direction={0. ,0. ,0.};
   if(index < MAX_SPHERES) {
     if(scene->empty[index] == TRUE) {
-      scene->nb++;
       scene->empty[index] = FALSE;
     }
-    scene->objs[index] = sphere;
-    scene->directions[index] = direction;
   }
 }
 
 void scene_remove(scene_t *scene, unsigned int id){
-  if(scene->empty[id]==FALSE){
-    scene->nb--;
-    scene->empty[id]=TRUE;
+  if(id < MAX_SPHERES) {
+    if(scene->empty[id]==FALSE){
+      scene->empty[id]=TRUE;
+    }
   }
 }
 
@@ -156,7 +154,6 @@ int intersect_sphere(ray_t r, sphere_t c, double *t){
       result = c.color;
     }
   }
-
   return result; 
 }
 
@@ -267,9 +264,11 @@ int sphere_collision(sphere_t *s1, sphere_t *s2) {
  * @param scene the scene
  * @param index the index of the sphere
  */
-void sphere_move(scene_t *scene, int index) {
-  sphere_t tmp = scene->objs[index];
-  int i = 0, stop = 0;
+void sphere_move(scene_t *scene, int index, WINDOW* info_window) {
+  sphere_t tmp;
+  int i = 0, stop = 0,status;
+
+  tmp = scene->objs[index];
 
   /* Compute the new center of the sphere */
   tmp.center.x += scene->directions[index].x;
@@ -278,10 +277,34 @@ void sphere_move(scene_t *scene, int index) {
 
   /* Check for collision with other spheres of the scene */
   while((i < MAX_SPHERES) && (stop == 0)) {
-    if((i != index) && (scene->empty[i] == FALSE) &&
-       (sphere_collision(&scene->objs[i], &tmp)))
-      stop = 1;
-    i++;
+    if(i==index)
+      ++i;
+    if(i==MAX_SPHERES)
+      break;
+
+    status = pthread_mutex_trylock(&scene->mutexs[i]);
+
+    if (status != 0){
+      wprintw(info_window,"Thread %d is making a pause at %d\n",index,i);
+      wrefresh(info_window);
+
+      pthread_cond_wait(&scene->is_free[i],&scene->mutexs[i]);
+
+      wprintw(info_window,"Thread %d is going back to work\n",index);
+      wrefresh(info_window);
+    }else{        
+      if((scene->empty[i] == FALSE) &&
+            (sphere_collision(&scene->objs[i], &tmp)))
+            stop = 1;
+
+      pthread_cond_broadcast(&scene->is_free[i]);
+      status=pthread_mutex_unlock(&scene->mutexs[i]);
+      if (status != 0)
+        wprintw(info_window, "Probleme unlock mutex %d\n",i);
+      wrefresh(info_window);
+
+      i++;
+    }
   }
 
   if(stop == 1) {
@@ -323,16 +346,4 @@ void sphere_move(scene_t *scene, int index) {
       scene->objs[index].center.z = scene->area.max_z;
     }
   }
-}
-
-/**
- * Update the scene.
- * @param scene the scene
- */
-void scene_update(scene_t *scene) {
-  int i;
-
-  for(i = 0; i < MAX_SPHERES; ++i)
-    if(scene->empty[i] == FALSE)
-      sphere_move(scene, i);
 }

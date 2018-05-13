@@ -2,7 +2,6 @@
 #include <stdlib.h>
 
 #include "ncurses.h"
-#include "cst.h"
 
 /**
 * Initialization of ncurses.
@@ -122,6 +121,37 @@ WINDOW *display_newdata(WINDOW* master,int i,int index){
 
 	wrefresh(ret);
 	return ret;
+}
+
+void display_obj(int id, scene_t *scene,WINDOW *data[MAX_OBJ][DATA_NB]){
+	if(id>=MAX_OBJ)
+		return;
+	
+	werase(data[id][0]);
+	wprintw(data[id][0],"%.2f",scene->objs[id].center.x);
+	wrefresh(data[id][0]);
+
+	werase(data[id][1]);
+	wprintw(data[id][1],"%.2f",scene->objs[id].center.y);
+	wrefresh(data[id][1]);
+
+	werase(data[id][2]);
+	wprintw(data[id][2],"%.2f",scene->objs[id].center.z);
+	wrefresh(data[id][2]);
+
+	werase(data[id][5]);
+	wprintw(data[id][5],"%.2f",scene->directions[id].x);
+	wrefresh(data[id][5]);
+
+	werase(data[id][6]);
+	wprintw(data[id][6],"%.2f",scene->directions[id].y);
+	wrefresh(data[id][6]);
+
+	werase(data[id][7]);
+	wprintw(data[id][7],"%.2f",scene->directions[id].z);
+	wrefresh(data[id][7]);
+
+	/*werase(data[id][8]);*/
 }
 
 int souris_getpos(int *x, int *y, int *bouton) {

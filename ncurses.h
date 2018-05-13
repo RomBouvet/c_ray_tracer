@@ -2,6 +2,8 @@
 #define _NCURSES_
 
 #include <ncurses.h>
+#include "scene.h"
+#include "cst.h"
 
 /**
  * Initialization of ncurses.
@@ -31,6 +33,8 @@ void destroy_win(WINDOW*);
 
 WINDOW *display_newobj(int i,int width);
 WINDOW *display_newdata(WINDOW* master,int i,int index);
+
+void display_obj(int id, scene_t *scene,WINDOW *data[MAX_OBJ][DATA_NB]);
 
 int souris_getpos(int *x, int *y, int *bouton);
 

@@ -1,7 +1,10 @@
 #ifndef _SCENE_
 #define _SCENE_
 
+#include <pthread.h>
 #include <ncurses.h>
+
+#define MAX_SPHERES 10
 
 /* A vector */
 typedef struct {
@@ -24,15 +27,16 @@ typedef struct {
   int color;          /* Color */
 } sphere_t;
 
-#define MAX_SPHERES 10
-
 /* A scene that gathers spheres */
 typedef struct {
-  int nb;             /* Number of objects in the scene */
-  area_t area;        /* Area of the scene */
   int empty[MAX_SPHERES]; /* TRUE if it's empty */
   sphere_t objs[MAX_SPHERES]; /* Spheres of the scene */
   vector_t directions[MAX_SPHERES]; /* Directions of the spheres */
+
+  pthread_mutex_t mutexs[MAX_SPHERES];
+  pthread_cond_t is_free[MAX_SPHERES];
+
+  area_t area;        /* Area of the scene */
   vector_t camera;    /* Position of the camera */
   double focal;       /* Focal angle */
 } scene_t;
@@ -141,19 +145,7 @@ int sphere_collision(sphere_t *s1, sphere_t *s2);
  * @param scene the scene
  * @param index the index of the sphere
  */
-void sphere_move(scene_t *scene, int index);
+void sphere_move(scene_t *scene, int index, WINDOW *info_window);
 
-/**
- * Move a sphere of the scene.
- * @param scene the scene
- * @param index the index of the sphere
- */
-void sphere_move(scene_t *scene, int index);
-
-/**
- * Update the scene.
- * @param scene the scene
- */
-void scene_update(scene_t *scene);
 
 #endif

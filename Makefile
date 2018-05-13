@@ -27,7 +27,7 @@ CC = gcc
 CCFLAGS_STD = -Wall -O3 -ansi -pedantic
 CCFLAGS_DEBUG = -D _DEBUG_
 CCFLAGS = $(CCFLAGS_STD)
-CCLIBS = -lm -lncurses
+CCLIBS = -lm -lncurses -lpthread
 
 #
 # REGLES
@@ -91,6 +91,6 @@ archive: clean
 controller.o:controller.c controller_utils.h cst.h scene.h ncurses.h
 controller_utils.o: controller_utils.c controller_utils.h cst.h
 viewer.o: viewer.c cst.h
-ncurses.o: ncurses.c ncurses.h
+ncurses.o: ncurses.c ncurses.h scene.h cst.h
 scene.o: scene.c scene.h ncurses.h
 rayt.o: rayt.c ncurses.h cst.h scene.h

@@ -8,6 +8,7 @@
 
 #define CLIENT_NB 4
 #define MAX_OBJ 10
+#define REFRESH_TIME 1000
 
 /* DO NOT CHANGE */
 

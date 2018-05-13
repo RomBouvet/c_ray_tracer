@@ -15,12 +15,48 @@
 #include "scene.h"
 #include "cst.h"
 
-int main(int argc, char *argv[]){
-    int i,j,msgid,shmid,mouse_x,mouse_y,button,ch,buf=6;
+scene_t *scene;
     WINDOW *bg,*main_window,*info_window_borders,*info_window,*obj_windows[MAX_OBJ],*data[MAX_OBJ][DATA_NB];
+
+void* obj_thread(void *arg){
+    int status,*id=(int*) arg;
+
+    wprintw(info_window,"Object %d created\n",*id);
+
+    while(1){ 
+        sleep(1);
+
+        status=pthread_mutex_lock(&scene->mutexs[*id]);
+        if (status != 0)
+            wprintw(info_window, "Probleme lock mutex %d\n",*id);
+
+        sphere_move(scene,*id,info_window);
+        display_obj(*id,scene,data);
+        wrefresh(obj_windows[*id]);
+
+        wprintw(info_window,"Object %d is moving (%f,%f,%f)...\n",*id,scene->objs[*id].center.x,scene->objs[*id].center.y,scene->objs[*id].center.z);
+        wrefresh(info_window);
+
+        pthread_cond_broadcast(&scene->is_free[*id]);
+        status=pthread_mutex_unlock(&scene->mutexs[*id]);
+        if (status != 0)
+            wprintw(info_window,"Probleme unlock mutex %d\n",*id);
+        wrefresh(info_window);
+        
+         
+    }
+    return NULL;
+}
+
+int main(int argc, char *argv[]){
+    int i,j,msgid,shmid,mouse_x,mouse_y,button,ch,buf=6,status,ids[MAX_OBJ];
+
     char static_data[9]={'x','y','z','r','c','x','y','z','v'};
     void *scene_pointer;
-    scene_t *scene;
+
+    pthread_t obj_threads[MAX_OBJ];
+
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED,NULL);
 
     /*** message's queue creation ***/
 	if((msgid=msgget((key_t)MSG_KEY, S_IRUSR | S_IWUSR | IPC_CREAT | IPC_EXCL))==-1){
@@ -116,6 +152,12 @@ int main(int argc, char *argv[]){
             case KEY_MOUSE:
                 if(souris_getpos(&mouse_x, &mouse_y, &button) == OK) {
                     if(mouse_y>4 && mouse_y<=4+MAX_OBJ){
+                        status=pthread_mutex_lock(&scene->mutexs[mouse_y-5]);
+                        if (status != 0)
+                            wprintw(info_window, "Probleme lock mutex %d\n",mouse_y-5);
+                        else if(mouse_y-5==0)
+                            wprintw(info_window, "Locked mutex %d -> ",mouse_y-5);
+
                         switch(mouse_x){
                             case 15:
                             case 16:
@@ -243,13 +285,21 @@ int main(int argc, char *argv[]){
                             case 80:
                             case 81:
                                 add_remove(scene,mouse_y-5);
-                                if(scene->empty[mouse_y-5]==TRUE){
-                                    wprintw(info_window,"Removed object %d\n",mouse_y-5);
+                                if(scene->empty[mouse_y-5]==FALSE){
+                                    ids[mouse_y-5]=mouse_y-5;
+                                    wbkgd(data[mouse_y-5][9],COLOR_PAIR(5));
+                                    pthread_create(&obj_threads[mouse_y-5],NULL,obj_thread,&ids[mouse_y-5]);
+                                }else{
                                     wbkgd(data[mouse_y-5][9],COLOR_PAIR(6));
+                                    pthread_cancel(obj_threads[mouse_y-5]);
+                                }
+                                /*if(scene->empty[mouse_y-5]==TRUE){
+                                    wprintw(info_window,"Removed object %d\n",mouse_y-5);
+                                    
                                 }else{
                                     wprintw(info_window,"Added object %d\n",mouse_y-5);
                                     wbkgd(data[mouse_y-5][9],COLOR_PAIR(5));
-                                }
+                                }*/
                                 wrefresh(data[mouse_y-5][9]);
                                 break;
 
@@ -260,12 +310,13 @@ int main(int argc, char *argv[]){
                             	  wprintw(info_window,"PAUSE/RESUME OBJECT %d\n",mouse_y-5);
                                 break;
                         }
+
+                        pthread_cond_broadcast(&scene->is_free[mouse_y-5]);
+                        status=pthread_mutex_unlock(&scene->mutexs[mouse_y-5]);
+                        if (status != 0)
+                            wprintw(info_window, "Probleme lock mutex %d\n",mouse_y-5);
                     }
                 }
-                wrefresh(info_window);
-                break;
-            case KEY_UP:
-                wprintw(info_window,"UP Pressed\n");
                 wrefresh(info_window);
                 break;
         }
@@ -285,6 +336,13 @@ int main(int argc, char *argv[]){
 
     ncurses_stop();
 
+    for(i=0;i<MAX_OBJ;i++){
+        if(scene->empty[i]!=TRUE){
+            pthread_cancel(obj_threads[i]);
+            printf("Thread %d destroyed\n",i);
+        }
+    }
+
     /* Detachement du segment de memoire partagee */
     if(shmdt(scene_pointer) == -1) {
         perror("Erreur lors du detachement ");
@@ -297,5 +355,5 @@ int main(int argc, char *argv[]){
         exit(EXIT_FAILURE);
     }
 
-	return 0;
+	return EXIT_SUCCESS;
 }
